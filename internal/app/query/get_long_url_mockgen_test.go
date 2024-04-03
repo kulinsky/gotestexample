@@ -13,9 +13,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestGetFullUrlQueryExecuteMockgen(t *testing.T) {
+func TestGetLongUrlQueryExecuteMockgen(t *testing.T) {
 	t.Parallel()
 
+	//nolint:gocritic // it's common pattern to use assert
 	assert := assert.New(t)
 
 	type in struct {
@@ -29,16 +30,16 @@ func TestGetFullUrlQueryExecuteMockgen(t *testing.T) {
 		longURL string
 	}
 
-	setup := func(ctx context.Context, in *in) *query.GetFullUrlQuery {
+	setup := func(ctx context.Context, in *in) *query.GetLongURLQuery {
 		ctrl := gomock.NewController(t)
 		repo := mocks.NewMockQueryRepo(ctrl)
 		repo.EXPECT().Get(ctx, in.id).Return(in.longURL, in.err).Times(1)
 
-		return query.NewGetFullURLQuery(repo)
+		return query.NewGetLongURLQuery(repo)
 	}
 
 	tests := []struct {
-		setup  func(context.Context, *in) *query.GetFullUrlQuery
+		setup  func(context.Context, *in) *query.GetLongURLQuery
 		assert func(*out)
 		name   string
 		in     in

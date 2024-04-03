@@ -1,10 +1,10 @@
-package idgenerator
+package idprovider
 
 import gonanoid "github.com/matoous/go-nanoid/v2"
 
-type NanoIDGenerator struct{}
+type NanoIDProvider struct{}
 
-func (n NanoIDGenerator) Generate() string {
+func (n NanoIDProvider) Provide() string {
 	id, err := gonanoid.New(7)
 	if err != nil {
 		panic(err)

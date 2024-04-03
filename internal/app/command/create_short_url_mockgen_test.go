@@ -16,6 +16,7 @@ import (
 func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 	t.Parallel()
 
+	//nolint:gocritic // it's common pattern to use assert
 	assert := assert.New(t)
 
 	type in struct {
@@ -30,7 +31,7 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 	}
 
 	tests := []struct {
-		setup  func(context.Context, *in) *command.CreateShortUrlCommand
+		setup  func(context.Context, *in) *command.CreateShortURLCmd
 		assert func(*out)
 		name   string
 		in     in
@@ -38,14 +39,14 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 		{
 			name: "successfully save",
 			in:   in{longURL: "https://google.com", id: "1"},
-			setup: func(ctx context.Context, in *in) *command.CreateShortUrlCommand {
+			setup: func(ctx context.Context, in *in) *command.CreateShortURLCmd {
 				ctrl := gomock.NewController(t)
-				idp := mocks.NewMockIDGenerator(ctrl)
+				idp := mocks.NewMockIDProvider(ctrl)
 				repo := mocks.NewMockCmdRepo(ctrl)
-				idp.EXPECT().Generate().Return(in.id).Times(1)
+				idp.EXPECT().Provide().Return(in.id).Times(1)
 				repo.EXPECT().Save(ctx, in.id, in.longURL).Return(in.err).Times(1)
 
-				return command.NewCreateShortURLCommand(idp, repo)
+				return command.NewCreateShortURLCmd(idp, repo)
 			},
 			assert: func(out *out) {
 				assert.NoError(out.err)
@@ -55,14 +56,14 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 		{
 			name: "invalid url",
 			in:   in{longURL: "this is invalid url"},
-			setup: func(ctx context.Context, in *in) *command.CreateShortUrlCommand {
+			setup: func(ctx context.Context, in *in) *command.CreateShortURLCmd {
 				ctrl := gomock.NewController(t)
-				idp := mocks.NewMockIDGenerator(ctrl)
+				idp := mocks.NewMockIDProvider(ctrl)
 				repo := mocks.NewMockCmdRepo(ctrl)
-				idp.EXPECT().Generate().Times(0)
+				idp.EXPECT().Provide().Times(0)
 				repo.EXPECT().Save(ctx, in.id, in.longURL).Times(0)
 
-				return command.NewCreateShortURLCommand(idp, repo)
+				return command.NewCreateShortURLCmd(idp, repo)
 			},
 			assert: func(out *out) {
 				assert.ErrorIs(out.err, common.ErrValidation)
@@ -72,14 +73,14 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 		{
 			name: "repo error on save",
 			in:   in{longURL: "https://google.com", id: "1", err: errors.New("unexpected repository error")},
-			setup: func(ctx context.Context, in *in) *command.CreateShortUrlCommand {
+			setup: func(ctx context.Context, in *in) *command.CreateShortURLCmd {
 				ctrl := gomock.NewController(t)
-				idp := mocks.NewMockIDGenerator(ctrl)
+				idp := mocks.NewMockIDProvider(ctrl)
 				repo := mocks.NewMockCmdRepo(ctrl)
-				idp.EXPECT().Generate().Return(in.id).Times(1)
+				idp.EXPECT().Provide().Return(in.id).Times(1)
 				repo.EXPECT().Save(ctx, in.id, in.longURL).Return(in.err).Times(1)
 
-				return command.NewCreateShortURLCommand(idp, repo)
+				return command.NewCreateShortURLCmd(idp, repo)
 			},
 			assert: func(out *out) {
 				assert.ErrorIs(out.err, common.ErrTechnical)

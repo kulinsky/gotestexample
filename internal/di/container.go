@@ -6,13 +6,13 @@ import (
 )
 
 type Container struct {
-	CreateShortUrlCmd *command.CreateShortUrlCommand
-	GetFullUrlQuery   *query.GetFullUrlQuery
+	CreateShortURLCmd *command.CreateShortURLCmd
+	GetLongURLQuery   *query.GetLongURLQuery
 }
 
-func New(cmdCreateShortURL *command.CreateShortUrlCommand, qGetFullURL *query.GetFullUrlQuery) *Container {
+func New(cmd *command.CreateShortURLCmd, q *query.GetLongURLQuery) *Container {
 	return &Container{
-		CreateShortUrlCmd: cmdCreateShortURL,
-		GetFullUrlQuery:   qGetFullURL,
+		CreateShortURLCmd: cmd,
+		GetLongURLQuery:   q,
 	}
 }

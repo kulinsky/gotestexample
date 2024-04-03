@@ -1,4 +1,4 @@
-//go:generate mockgen -destination=../../../mocks/create_short_url_cmd.go -package=mocks -mock_names=Repository=MockCmdRepo,IDGenerator=MockIDGenerator integrationtest/internal/app/command Repository,IDGenerator
+//go:generate mockgen -destination=../../../mocks/create_short_url_cmd.go -package=mocks -mock_names=Repository=MockCmdRepo,IDProvider=MockIDProvider github.com/kulinsky/gotestexample/internal/app/command Repository,IDProvider
 
 package command
 
@@ -15,33 +15,33 @@ var (
 	ErrRepository = fmt.Errorf("command repo error: %w", common.ErrTechnical)
 )
 
-type IDGenerator interface {
-	Generate() string
+type IDProvider interface {
+	Provide() string
 }
 
 type Repository interface {
-	Save(ctx context.Context, id string, full_url string) error
+	Save(ctx context.Context, id string, longURL string) error
 }
 
-type CreateShortUrlCommand struct {
-	idGenerator IDGenerator
-	repo        Repository
+type CreateShortURLCmd struct {
+	idProvider IDProvider
+	repo       Repository
 }
 
-func NewCreateShortURLCommand(idGen IDGenerator, repo Repository) *CreateShortUrlCommand {
-	return &CreateShortUrlCommand{
-		idGenerator: idGen,
-		repo:        repo,
+func NewCreateShortURLCmd(idp IDProvider, repo Repository) *CreateShortURLCmd {
+	return &CreateShortURLCmd{
+		idProvider: idp,
+		repo:       repo,
 	}
 }
 
-func (cmd *CreateShortUrlCommand) Execute(ctx context.Context, rawURL string) (string, error) {
+func (cmd *CreateShortURLCmd) Execute(ctx context.Context, rawURL string) (string, error) {
 	parsedURL, err := url.ParseRequestURI(rawURL)
 	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
 		return "", ErrInvalidURL
 	}
 
-	id := cmd.idGenerator.Generate()
+	id := cmd.idProvider.Provide()
 
 	if err := cmd.repo.Save(ctx, id, parsedURL.String()); err != nil {
 		return "", fmt.Errorf("%w: %s", ErrRepository, err.Error())

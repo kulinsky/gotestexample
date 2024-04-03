@@ -10,22 +10,22 @@ import (
 
 var ErrRepository = fmt.Errorf("query repo error: %w", common.ErrTechnical)
 
-//go:generate mockgen -destination=../../../mocks/get_full_url_repo.go -mock_names=Repository=MockQueryRepo -package=mocks integrationtest/internal/app/query Repository
+//go:generate mockgen -destination=../../../mocks/get_long_url_repo.go -mock_names=Repository=MockQueryRepo -package=mocks github.com/kulinsky/gotestexample/internal/app/query Repository
 type Repository interface {
 	Get(ctx context.Context, id string) (string, error)
 }
 
-type GetFullUrlQuery struct {
+type GetLongURLQuery struct {
 	repo Repository
 }
 
-func NewGetFullURLQuery(repo Repository) *GetFullUrlQuery {
-	return &GetFullUrlQuery{
+func NewGetLongURLQuery(repo Repository) *GetLongURLQuery {
+	return &GetLongURLQuery{
 		repo: repo,
 	}
 }
 
-func (q *GetFullUrlQuery) Execute(ctx context.Context, id string) (string, error) {
+func (q *GetLongURLQuery) Execute(ctx context.Context, id string) (string, error) {
 	res, err := q.repo.Get(ctx, id)
 	if err != nil {
 		if errors.Is(err, common.ErrNotFound) {

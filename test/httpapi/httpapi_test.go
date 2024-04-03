@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
+
 	"github.com/kulinsky/gotestexample/internal/app/command"
 	"github.com/kulinsky/gotestexample/internal/app/query"
 	"github.com/kulinsky/gotestexample/internal/di"
 	"github.com/kulinsky/gotestexample/internal/infra/httpapi"
-	"github.com/kulinsky/gotestexample/internal/infra/idgenerator"
+	"github.com/kulinsky/gotestexample/internal/infra/idprovider"
 	"github.com/kulinsky/gotestexample/internal/infra/inmemory"
 )
 
@@ -18,12 +19,13 @@ type Req struct {
 	URL string `json:"url"`
 }
 
+//nolint:gocritic // it's ok
 func newSut(t *testing.T) (*httpexpect.Expect, func()) {
 	repo := inmemory.New()
-	idGen := idgenerator.NanoIDGenerator{}
+	idp := idprovider.NanoIDProvider{}
 
-	cmdCreateURL := command.NewCreateShortURLCommand(idGen, repo)
-	queryGetFullURL := query.NewGetFullURLQuery(repo)
+	cmdCreateURL := command.NewCreateShortURLCmd(idp, repo)
+	queryGetFullURL := query.NewGetLongURLQuery(repo)
 
 	container := di.New(cmdCreateURL, queryGetFullURL)
 
@@ -32,6 +34,7 @@ func newSut(t *testing.T) (*httpexpect.Expect, func()) {
 	server := httptest.NewServer(router)
 
 	sut := httpexpect.Default(t, server.URL)
+
 	return sut, server.Close
 }
 

@@ -32,6 +32,7 @@ func InitRouter(container *di.Container) *http.ServeMux {
 
 	router.HandleFunc("POST /", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		w.Header().Set("Content-Type", "application/json")
 
 		var req CreateRequest
@@ -49,7 +50,7 @@ func InitRouter(container *di.Container) *http.ServeMux {
 			return
 		}
 
-		id, err := container.CreateShortUrlCmd.Execute(ctx, req.URL)
+		id, err := container.CreateShortURLCmd.Execute(ctx, req.URL)
 		if err != nil {
 			terminate(w, err)
 
@@ -57,16 +58,20 @@ func InitRouter(container *di.Container) *http.ServeMux {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(CreateResponse{ID: id})
+
+		if err := json.NewEncoder(w).Encode(CreateResponse{ID: id}); err != nil {
+			terminate(w, fmt.Errorf("%w: failed to encode response: %e", common.ErrTechnical, err))
+		}
 	})
 
 	router.HandleFunc("GET /{id}", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
 		w.Header().Set("Content-Type", "application/json")
 
 		id := r.PathValue("id")
 
-		url, err := container.GetFullUrlQuery.Execute(ctx, id)
+		url, err := container.GetLongURLQuery.Execute(ctx, id)
 		if err != nil {
 			terminate(w, err)
 
@@ -74,12 +79,16 @@ func InitRouter(container *di.Container) *http.ServeMux {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(GetResponse{URL: url})
+
+		if err := json.NewEncoder(w).Encode(GetResponse{URL: url}); err != nil {
+			terminate(w, fmt.Errorf("%w: failed to encode response: %e", common.ErrTechnical, err))
+		}
 	})
 
 	return router
 }
 
+//nolint:gocritic // it's ok
 func matchErr(err error) (int, string) {
 	if errors.Is(err, common.ErrValidation) {
 		return http.StatusBadRequest, err.Error()
@@ -96,5 +105,6 @@ func terminate(w http.ResponseWriter, err error) {
 	code, msg := matchErr(err)
 
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(ErrorResponse{Error: msg})
+
+	_ = json.NewEncoder(w).Encode(ErrorResponse{Error: msg})
 }

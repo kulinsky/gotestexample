@@ -5,27 +5,28 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/kulinsky/gotestexample/internal/app/command"
-	"github.com/kulinsky/gotestexample/internal/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/kulinsky/gotestexample/internal/app/command"
+	"github.com/kulinsky/gotestexample/internal/common"
 )
 
 type repositoryMock struct {
 	mock.Mock
 }
 
-func (m *repositoryMock) Save(ctx context.Context, id, fullURL string) error {
+func (m *repositoryMock) Save(_ context.Context, id, fullURL string) error {
 	args := m.Called(id, fullURL)
 
 	return args.Error(0)
 }
 
-type idGeneratorStub struct {
+type idProviderStub struct {
 	ID string
 }
 
-func (d idGeneratorStub) Generate() string {
+func (d idProviderStub) Provide() string {
 	return d.ID
 }
 
@@ -33,6 +34,8 @@ func TestCreateShortURLCommandTable(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.TODO()
+
+	//nolint:gocritic // it's common pattern to use assert
 	assert := assert.New(t)
 
 	type in struct {
@@ -45,7 +48,7 @@ func TestCreateShortURLCommandTable(t *testing.T) {
 	}
 
 	tests := []struct {
-		setup  func(*repositoryMock, *idGeneratorStub, *in)
+		setup  func(*repositoryMock, *idProviderStub, *in)
 		assert func(*repositoryMock, *out)
 		name   string
 		in     in
@@ -53,8 +56,8 @@ func TestCreateShortURLCommandTable(t *testing.T) {
 		{
 			name: "successfully save",
 			in:   in{fullURL: "https://google.com"},
-			setup: func(repo *repositoryMock, idGen *idGeneratorStub, in *in) {
-				idGen.ID = "1"
+			setup: func(repo *repositoryMock, idp *idProviderStub, in *in) {
+				idp.ID = "1"
 				repo.On("Save", "1", in.fullURL).Return(nil)
 			},
 			assert: func(repo *repositoryMock, out *out) {
@@ -66,8 +69,8 @@ func TestCreateShortURLCommandTable(t *testing.T) {
 		{
 			name: "invalid url",
 			in:   in{fullURL: "this is invalid url"},
-			setup: func(_ *repositoryMock, idGen *idGeneratorStub, _ *in) {
-				idGen.ID = "1"
+			setup: func(_ *repositoryMock, idp *idProviderStub, _ *in) {
+				idp.ID = "1"
 			},
 			assert: func(_ *repositoryMock, out *out) {
 				assert.ErrorIs(out.err, common.ErrValidation)
@@ -77,8 +80,8 @@ func TestCreateShortURLCommandTable(t *testing.T) {
 		{
 			name: "repo error on save",
 			in:   in{fullURL: "https://google.com"},
-			setup: func(repo *repositoryMock, idGen *idGeneratorStub, in *in) {
-				idGen.ID = "1"
+			setup: func(repo *repositoryMock, idp *idProviderStub, in *in) {
+				idp.ID = "1"
 				repo.On("Save", "1", in.fullURL).Return(errors.New("unexpected repository error"))
 			},
 			assert: func(repo *repositoryMock, out *out) {
@@ -96,11 +99,11 @@ func TestCreateShortURLCommandTable(t *testing.T) {
 			t.Parallel()
 
 			// Given
-			idp := &idGeneratorStub{}
+			idp := &idProviderStub{}
 			repo := &repositoryMock{}
 			tt.setup(repo, idp, &tt.in)
 
-			sut := command.NewCreateShortURLCommand(idp, repo)
+			sut := command.NewCreateShortURLCmd(idp, repo)
 
 			// When
 			res, err := sut.Execute(ctx, tt.in.fullURL)

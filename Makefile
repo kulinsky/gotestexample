@@ -1,7 +1,12 @@
-.PHONY:
+.PHONY: lint
 default: run
 
 COVERAGE_FILE ?= coverage.out
+
+.PHONY: lint
+lint:
+	@golangci-lint --version && echo "golangci-lint -v run --fix ./..." || echo "golangci-lint not found"
+	@golangci-lint -v run --fix ./...
 
 .PHONY: run
 run:

@@ -16,16 +16,18 @@ type repositoryStub struct {
 	mock.Mock
 }
 
-func (s *repositoryStub) Get(ctx context.Context, id string) (string, error) {
+func (s *repositoryStub) Get(_ context.Context, id string) (string, error) {
 	args := s.Called(id)
 
 	return args.Get(0).(string), args.Error(1)
 }
 
-func TestGetFullUrlQueryExecute(t *testing.T) {
+func TestGetLongUrlQueryExecute(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.TODO()
+
+	//nolint:gocritic // it's common pattern to use assert
 	assert := assert.New(t)
 
 	type in struct {
@@ -33,8 +35,8 @@ func TestGetFullUrlQueryExecute(t *testing.T) {
 	}
 
 	type out struct {
-		err error
-		id  string
+		err     error
+		longURL string
 	}
 
 	tests := []struct {
@@ -51,7 +53,7 @@ func TestGetFullUrlQueryExecute(t *testing.T) {
 			},
 			assert: func(out *out) {
 				assert.NoError(out.err)
-				assert.Equal(out.id, "https://google.com")
+				assert.Equal(out.longURL, "https://google.com")
 			},
 		},
 		{
@@ -62,7 +64,7 @@ func TestGetFullUrlQueryExecute(t *testing.T) {
 			},
 			assert: func(out *out) {
 				assert.ErrorIs(out.err, common.ErrNotFound)
-				assert.Empty(out.id)
+				assert.Empty(out.longURL)
 			},
 		},
 		{
@@ -73,7 +75,7 @@ func TestGetFullUrlQueryExecute(t *testing.T) {
 			},
 			assert: func(out *out) {
 				assert.ErrorIs(out.err, common.ErrTechnical)
-				assert.Empty(out.id)
+				assert.Empty(out.longURL)
 			},
 		},
 	}
@@ -84,14 +86,17 @@ func TestGetFullUrlQueryExecute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			// Given
 			repo := &repositoryStub{}
-			sut := query.NewGetFullURLQuery(repo)
-
 			tt.setup(repo, &tt.in)
 
+			sut := query.NewGetLongURLQuery(repo)
+
+			// When
 			res, err := sut.Execute(ctx, tt.in.id)
 
-			tt.assert(&out{id: res, err: err})
+			// Then
+			tt.assert(&out{longURL: res, err: err})
 		})
 	}
 }
