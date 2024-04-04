@@ -41,7 +41,7 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 			in:   in{longURL: "https://google.com", id: "1"},
 			setup: func(ctx context.Context, in *in) *command.CreateShortURLCmd {
 				ctrl := gomock.NewController(t)
-				idp := mocks.NewMockIDProvider(ctrl)
+				idp := mocks.NewStubIDProvider(ctrl)
 				repo := mocks.NewMockCmdRepo(ctrl)
 				idp.EXPECT().Provide().Return(in.id).Times(1)
 				repo.EXPECT().Save(ctx, in.id, in.longURL).Return(in.err).Times(1)
@@ -58,7 +58,7 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 			in:   in{longURL: "this is invalid url"},
 			setup: func(ctx context.Context, in *in) *command.CreateShortURLCmd {
 				ctrl := gomock.NewController(t)
-				idp := mocks.NewMockIDProvider(ctrl)
+				idp := mocks.NewStubIDProvider(ctrl)
 				repo := mocks.NewMockCmdRepo(ctrl)
 				idp.EXPECT().Provide().Times(0)
 				repo.EXPECT().Save(ctx, in.id, in.longURL).Times(0)
@@ -75,7 +75,7 @@ func TestCreateShortURLCommandTableWithMockgen(t *testing.T) {
 			in:   in{longURL: "https://google.com", id: "1", err: errors.New("unexpected repository error")},
 			setup: func(ctx context.Context, in *in) *command.CreateShortURLCmd {
 				ctrl := gomock.NewController(t)
-				idp := mocks.NewMockIDProvider(ctrl)
+				idp := mocks.NewStubIDProvider(ctrl)
 				repo := mocks.NewMockCmdRepo(ctrl)
 				idp.EXPECT().Provide().Return(in.id).Times(1)
 				repo.EXPECT().Save(ctx, in.id, in.longURL).Return(in.err).Times(1)
